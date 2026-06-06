@@ -3,7 +3,7 @@
 
 MCP (Model Context Protocol) server that enables AI assistants to access your Oura Ring health data through OAuth2-authenticated API calls.
 
-Built by [@meimakes](https://x.com/meimakes)
+Built by [@madebydia](https://x.com/madebydia)
 
 
 Built for seamless integration with [Poke](https://poke.com) and other MCP-compatible clients. Deploy to Railway for production use or run locally for development.
@@ -31,7 +31,7 @@ Built for seamless integration with [Poke](https://poke.com) and other MCP-compa
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/meimakes/oura-mcp-server.git
+git clone https://github.com/madebydia/oura-mcp-server.git
 cd oura-mcp-server
 ```
 
@@ -466,7 +466,7 @@ MIT
 ## Support
 
 For issues or questions:
-- GitHub Issues: https://github.com/meimakes/oura-mcp-server/issues
+- GitHub Issues: https://github.com/madebydia/oura-mcp-server/issues
 - Oura API Docs: https://cloud.ouraring.com/docs
 - MCP Protocol: https://modelcontextprotocol.io
 
