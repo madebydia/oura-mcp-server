@@ -4,7 +4,8 @@ import { encryptToken, decryptToken } from '../utils/encryption.js';
 import { OAuthTokens } from '../oura/types.js';
 import { logger } from '../utils/logger.js';
 
-const TOKENS_FILE = path.join(process.cwd(), 'tokens.json');
+const tokenDirectory = process.env.RAILWAY_VOLUME_MOUNT_PATH || process.cwd();
+const TOKENS_FILE = process.env.TOKENS_FILE || path.join(tokenDirectory, 'tokens.json');
 const TOKEN_REFRESH_BUFFER = 5 * 60 * 1000; // Refresh 5 minutes before expiration
 
 // In-memory cache

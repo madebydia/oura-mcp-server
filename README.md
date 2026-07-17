@@ -190,6 +190,11 @@ npm run dev
 
 The server supports both SSE and Streamable HTTP transports for maximum compatibility.
 
+For Railway deployments, attach a persistent volume (for example at `/data`).
+The server automatically stores its encrypted Oura OAuth token file at
+`$RAILWAY_VOLUME_MOUNT_PATH/tokens.json`, so normal deployments do not require
+reauthorization. `TOKEN_ENCRYPTION_KEY` must remain stable across deployments.
+
 #### Other MCP Clients
 
 Configure your MCP client with:
