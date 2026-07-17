@@ -273,27 +273,66 @@ async function handleGetSleepSummary(args: any): Promise<string> {
   const cached = cache.get<string>(cacheKey);
   if (cached) return cached;
 
-  const data = await getDailySleep(start_date, end_date || getTodayDate());
+  const requestedEnd = end_date || getTodayDate();
+  const [dailySleep, sleepPeriods] = await Promise.all([
+    getDailySleep(start_date, requestedEnd),
+    getSleepPeriods(start_date, requestedEnd),
+  ]);
 
-  const mapped = data.map((item) => ({
-    date: item.day,
-    score: item.score,
-    total_sleep_duration: item.contributors.total_sleep * 3600,
-    efficiency: item.contributors.efficiency,
-    latency: item.contributors.latency * 60,
-    deep_sleep_duration: item.contributors.deep_sleep * 3600,
-    light_sleep_duration: (item.contributors.total_sleep - item.contributors.deep_sleep - item.contributors.rem_sleep) * 3600,
-    rem_sleep_duration: item.contributors.rem_sleep * 3600,
-    awake_time: (item.contributors.total_sleep * (1 - item.contributors.efficiency / 100)) * 3600,
-    restfulness: item.contributors.restfulness,
-    timing: item.contributors.timing,
-    ...(include_hrv && { hrv_balance: 0 }), // Note: HRV balance not directly available in daily sleep
-  }));
+  const mapped = dailySleep.map((item) => {
+    // Daily sleep contributors are 0-100 score components, not durations.
+    // Actual stage durations are seconds on the detailed sleep-period records.
+    const periods = sleepPeriods.filter((period) => period.day === item.day);
+    const sum = (field: keyof typeof periods[number]) =>
+      periods.reduce((total, period) => {
+        const value = period[field];
+        return total + (typeof value === 'number' ? value : 0);
+      }, 0);
+    const totalSleepDuration = sum('total_sleep_duration');
+    const timeInBed = sum('time_in_bed');
+    const hrvValues = periods
+      .map((period) => period.average_hrv)
+      .filter((value) => Number.isFinite(value) && value > 0);
+    const primaryPeriod = periods.reduce<(typeof periods)[number] | undefined>(
+      (longest, period) =>
+        !longest || period.total_sleep_duration > longest.total_sleep_duration
+          ? period
+          : longest,
+      undefined
+    );
+
+    return {
+      date: item.day,
+      score: item.score,
+      total_sleep_duration: totalSleepDuration,
+      efficiency: timeInBed > 0 ? (totalSleepDuration / timeInBed) * 100 : 0,
+      latency: primaryPeriod?.latency || 0,
+      deep_sleep_duration: sum('deep_sleep_duration'),
+      light_sleep_duration: sum('light_sleep_duration'),
+      rem_sleep_duration: sum('rem_sleep_duration'),
+      awake_time: sum('awake_time'),
+      sleep_periods: periods.length,
+      restfulness_score: item.contributors.restfulness,
+      timing_score: item.contributors.timing,
+      ...(include_hrv && {
+        average_hrv:
+          hrvValues.length > 0
+            ? hrvValues.reduce((total, value) => total + value, 0) / hrvValues.length
+            : null,
+      }),
+    };
+  });
 
   const summary = {
-    average_score: mapped.reduce((acc, item) => acc + item.score, 0) / mapped.length,
-    average_duration: mapped.reduce((acc, item) => acc + item.total_sleep_duration, 0) / mapped.length,
-    average_efficiency: mapped.reduce((acc, item) => acc + item.efficiency, 0) / mapped.length,
+    average_score: mapped.length > 0
+      ? mapped.reduce((acc, item) => acc + item.score, 0) / mapped.length
+      : null,
+    average_duration: mapped.length > 0
+      ? mapped.reduce((acc, item) => acc + item.total_sleep_duration, 0) / mapped.length
+      : null,
+    average_efficiency: mapped.length > 0
+      ? mapped.reduce((acc, item) => acc + item.efficiency, 0) / mapped.length
+      : null,
     total_days: mapped.length,
   };
 

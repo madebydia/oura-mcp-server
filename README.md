@@ -204,6 +204,10 @@ Get user's personal information and ring details.
 ### 2. get_sleep_summary
 Get sleep data for a date range.
 
+Sleep and stage durations are returned in seconds from Oura's detailed sleep
+period records. Contributor values from the daily score endpoint are exposed
+only as scores; they are not treated as hours or durations.
+
 **Parameters:**
 - `start_date` (required): YYYY-MM-DD
 - `end_date` (optional): YYYY-MM-DD
